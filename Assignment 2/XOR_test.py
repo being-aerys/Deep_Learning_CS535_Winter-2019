@@ -8,6 +8,7 @@ from __future__ import print_function
 
 import sys
 import time
+import csv
 try:
    import _pickle as pickle
 except:
@@ -33,9 +34,6 @@ class LinearTransform(object):
         #batch_linear_summation = x * self.weights# + self.bias
 
         #print("First linear transform ", np.dot(np.transpose(self.weights),np.transpose(x) ) .shape,self.bias.shape)
-
-        print("np.dot(np.transpose(self.weights),np.transpose(x) )",np.dot(np.transpose(self.weights),np.transpose(x) ).shape)
-        print("self.bias",self.bias.shape)
         batch_linear_summation = np.dot(np.transpose(self.weights),np.transpose(x) ) + self.bias
 
 
@@ -54,7 +52,7 @@ class LinearTransform(object):
 
 
     def backward(self, input, grad_output,learning_rate,momentum,l2_penalty):
-        #print("linear transform 2 ko backward bhitra ",np.transpose(grad_output).shape, np.transpose(self.weights).shape) #dE by dop dus ota hunuparxa for each example
+        print("linear transform 2 ko backward bhitra ",np.transpose(grad_output).shape, np.transpose(self.weights).shape) #dE by dop dus ota hunuparxa for each example
 
         dE_by_dZ1 = np.dot(np.transpose(grad_output), np.transpose(self.weights))
         #print("dE_by_dZ1 shape",dE_by_dZ1.shape)
@@ -75,7 +73,6 @@ class ReLU(object):
 
     def forward(self, x):
 	# DEFINE forward function
-        print("Relu Input is ",x)
         relu_output = np.maximum(0,x)
         #print("relu_output is",relu_output)
         return relu_output
@@ -86,8 +83,9 @@ class ReLU(object):
         #print("Relu backeard bhitra ", input, grad_output)
         dZ1_by_dA1 = input
         print("here",dZ1_by_dA1.dtype)
+        #np.where(dZ1_by_dA1 == 0, np.random.uniform(0.00001,1), dZ1_by_dA1)
+        np.where(dZ1_by_dA1 == 0, 0.5, dZ1_by_dA1)
 
-        np.where(dZ1_by_dA1 == 0, np.random.uniform(0.00001,1), dZ1_by_dA1)
         np.where(dZ1_by_dA1 < 0, 0, dZ1_by_dA1)
         np.where(dZ1_by_dA1 > 0, 1, dZ1_by_dA1)
 
@@ -184,17 +182,13 @@ class MLP(object):
 
         #np.full((2,2),(1,2)))
         self.linear_transform_object_first = LinearTransform(np.random.rand(input_dims, hidden_units),np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.random.rand(2,1)))#-----------------------MANUALLY done
-        print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-        print(self.linear_transform_object_first.weights.shape)
-        print(self.linear_transform_object_first.bias.shape)
+
         self.relu_layer = ReLU()
 
-        print("np.full((1,1),np.random.rand(1))",np.full((1,1),np.random.rand(1)))
-        #self.linear_transform_object_second = LinearTransform(np.random.rand(hidden_units, 1), np.full((1,1),np.random.rand(1)))
-        self.linear_transform_object_second = LinearTransform(np.random.rand(hidden_units, 1), np.full((1,int(num_examples_per_batch)),np.random.rand(1)))
+        self.linear_transform_object_second = LinearTransform(np.random.rand(hidden_units, 1), np.full((1,1),np.random.rand(1)))
 
-        print(self.linear_transform_object_second.weights.shape)
-        print(self.linear_transform_object_second.bias.shape)
+
+
         self.sigmoid_object_layer = SigmoidCrossEntropy()
 
 
@@ -252,9 +246,23 @@ class MLP(object):
         #calculate the loss for this batch
         y_transposed = np.transpose(self.y_for_this_batch) #doing transpose to make dimensions compatible
         y_cap_transposed = np.transpose(self.y_cap)
-        #print("y ransposed ",y_transposed.shape)
-        #print("y_cap_transposed",y_cap_transposed.shape)
+        print("y ransposed ",y_transposed.shape)
+        print("y_cap_transposed",y_cap_transposed.shape)
         loss = -(np.dot(y_transposed, np.log(y_cap_transposed)) + np.dot((1 - y_transposed), (np.log(1 - y_cap_transposed))))
+
+
+
+#print("\n\n\nFollowing are the dimensions of all the components")
+
+
+        print("x_for_this_batch shape",self.x_for_this_batch)
+        print("\n\ny for this batch",self.y_for_this_batch)
+        print("\nA1",self.A1)
+        print("\nZ1",self.Z1)
+        print("\nA2",self.A2)
+        print("\nZ2",self.y_cap)
+        print("\ny transpose ",y_transposed)
+        print("\ny cap transpose ",y_cap_transposed)
 
         #print(" LOSS  ", loss)
         #time.sleep(1000)
@@ -290,7 +298,7 @@ class MLP(object):
 
         #print("************ dE_by_dy_cap",dE_by_dy_cap.shape)
 
-        dE_by_dA2 = self.sigmoid_object_layer.backward(input, self.y_for_this_batch, self.y_cap, dE_by_dy_cap, learning_rate, direction_for_W2, momentum, l2_penalty, self.linear_transform_object_second.weights, self.linear_transform_object_second.bias)
+        dE_by_dA2 = self.sigmoid_object_layer.backward(input, self.y_for_this_batch, self.y_cap, dE_by_dy_cap, learning_rate, direction, momentum, l2_penalty, self.linear_transform_object_second.weights, self.linear_transform_object_second.bias)
 
 
         #print("dE_by_dA2 shape ",dE_by_dA2.shape)
@@ -305,10 +313,9 @@ class MLP(object):
         #print("Shape of W2 is ",self.linear_transform_object_second.weights)
         dE_by_dW2 = np.dot(dE_by_dA2,np.transpose(self.Z1)) / num_examples_per_batch #averaging the update
 
-        #dE_by_db2 = np.sum(dE_by_dA2,axis=1)/num_examples_per_batch
-        dE_by_db2 = (dE_by_dA2)/num_examples_per_batch
+        dE_by_db2 = np.sum(dE_by_dA2,axis=1)/num_examples_per_batch
 
-        print("de dE_by_db2 dw2 ",dE_by_db2.shape)
+        #print("de by dw2 ",dE_by_dW2)
 
 
         dE_by_dZ1 = self.linear_transform_object_second.backward(self.Z1, dE_by_dA2, learning_rate, momentum, l2_penalty)
@@ -325,9 +332,8 @@ class MLP(object):
 
         dE_by_dW1 = np.dot(dE_by_dA1, self.x_for_this_batch)/num_examples_per_batch
 
-        #dE_by_db1 = (np.sum(dE_by_dA1,axis=1))/num_examples_per_batch
-        dE_by_db1 = ((dE_by_dA1))/num_examples_per_batch
-        print("dE_by_db1",dE_by_db1.shape)
+        dE_by_db1 = (np.sum(dE_by_dA1,axis=1))/num_examples_per_batch
+
 
         #**********************************************Unit test all values may be?
 
@@ -354,15 +360,12 @@ class MLP(object):
         print("\ndE+by_dy_cap ",dE_by_dy_cap.shape)
         print("\ndE_by_dA2 ",dE_by_dA2.shape)
         print("\ndE_by_dW2 ",dE_by_dW2.shape)
-        #print("\nsecpn layer weights",mlp.linear_transform_object_second.weights.shape)
         print("\ndE_by_db2 ",dE_by_db2.shape)
         print("\ndE_by_dZ1 ",dE_by_dZ1.shape)
         print("\ndE_by_dA1 ",dE_by_dA1.shape)
         print("\ndE_by_dW1 ",dE_by_dW1.shape)
         print("dE_by_db1 ",dE_by_db1.shape)
         print("\nThe loss is ",loss)
-
-        return(loss, dE_by_dW2,dE_by_db2,dE_by_dW1,dE_by_db1)
 
 
 
@@ -382,10 +385,6 @@ class MLP(object):
 
 
     def evaluate(self, y_cap, y):
-
-
-
-        ############-------------------testing the netwoork
         time.sleep(1000)
         print("y cap and y for loss ", y_cap, y)
         p = np.transpose(y)
@@ -401,46 +400,58 @@ class MLP(object):
 
 
 
-    def weight_update(self, loss, dE_by_dW2,dE_by_db2,dE_by_dW1,dE_by_db1,learning_rate, direction_w2,direction_W1,direction_b2,direction_b1, inertia_of_momentum, l2_penalty_factor):
+    def weight_update(self, loss_for_the_batch, lr, direction_passed, momentum,l2_penalty):
+        time.sleep(1000)
+        print("y truth",self.y_for_this_batch,"y cap",self.y_cap_for_this_batch)
+
+
+
+        x1 = np.dot(self.y_for_this_batch, np.transpose(( 1- self.y_for_this_batch)))
+        x2 = (np.dot((self.y_cap_for_this_batch),np.transpose((1-self.y_cap_for_this_batch))))
+        a = x1/x2
+
+
+        b = np.dot(self.y_cap_for_this_batch, np.transpose((1 - self.y_cap_for_this_batch)))
+
+        dE_by_dW2 = np.dot(np.dot(a,b), self.Z1)
 
 
 
 
-        new_direction_for_W2 = inertia_of_momentum * direction_w2 - np.dot(learning_rate, (( np.transpose(dE_by_dW2) + np.dot(l2_penalty_factor, self.linear_transform_object_second.weights ))))
+#         print("size ",x1.size,x2.size,a.size,b.size,dE_by_db2.size,dE_by_dW2.size)
+#         print("a, b, grad ",a,b,dE_by_db2, self.second_layer_bias)
+
+        #The dimension of dE by dW2 is 10 by 2
+        #10 examples taken in a batch so each of them give a unique feedback for both the weights in W2 for the 2 input weights
+        #to the sigmoid node
+        #we need to sum them up and take an average to do the update
 
 
 
-        self.linear_transform_object_second.weights += new_direction_for_W2
+        dE_by_dW2 = (dE_by_dW2.sum(axis = 0))/10#--------------------------------dont forget to change batch size here
 
-        print("old direction b2",direction_b2.shape)
-
-        print("old b2",self.linear_transform_object_second.bias.shape)
-        #print("yo k ho ta ",( np.array(dE_by_db2) + np.dot(l2_penalty_factor, self.linear_transform_object_second.bias )))
-        new_direction_for_b2 = inertia_of_momentum * direction_b2 - np.dot(learning_rate, (( np.array(dE_by_db2) + np.dot(l2_penalty_factor, self.linear_transform_object_second.bias ))))
-        print("to add to  direction b2",new_direction_for_b2.shape)
-
-        self.linear_transform_object_second.bias += new_direction_for_b2
-
-        print("new b2 shape ",self.linear_transform_object_second.bias.shape)
-
-        new_direction_for_W1 = inertia_of_momentum * direction_W1 - np.dot(learning_rate, (( np.transpose(dE_by_dW1) + np.dot(l2_penalty_factor, self.linear_transform_object_first.weights ))))
-        self.linear_transform_object_first.weights += new_direction_for_W1
+        #call the sigmoid unit to do the update on the weights by passing the necessary arguments
 
 
-        print("old b1 direction",direction_b1.shape)
+        #second layer weights updated here
+        direction_passed, self.second_layer_weights =  self.sigmoid_object_for_backpass.backward(self.second_layer_weights, lr, direction_passed, momentum,l2_penalty, dE_by_dW2)
 
-        print("old b1",self.linear_transform_object_first.bias.shape)
-
-
-        new_direction_for_b1 = inertia_of_momentum *(direction_b1) - np.dot(learning_rate, (( np.array(dE_by_db1) + np.dot(l2_penalty_factor, (self.linear_transform_object_first.bias )))))
-
-        print("to add to b1 ",new_direction_for_b1.shape)
+        #------------------second layer bias update
 
 
-        self.linear_transform_object_first.bias += new_direction_for_b1        #= np.sum(np.array(self.linear_transform_object_first.bias), new_value_for_bias1_update)
-        print("b1 shape after update", self.linear_transform_object_first.bias.shape)
+        dE_by_db2 = np.dot(a,b)
 
-        #return (self.linear_transform_object_second.weights,self.linear_transform_object_second.bias, self.linear_transform_object_first,self.linear_transform_object_first)
+
+
+
+
+
+        #time.sleep(5)
+        #NOW UPdate the first ;layer weights
+
+
+        #dE_by_d_y_cap = y -
+
 
 
 
@@ -469,23 +480,67 @@ class MLP(object):
 
 
 if __name__ == '__main__':
-    if sys.version_info[0] < 3:
-        print("system version is less than 3")
-        data = pickle.load(open('dataset_folder/cifar_2class_py2.p', 'rb'))
-
-    else:
-        #train_x, train_y, test_x, test_y
-        data = pickle.load(open('../../dataset_folder/cifar_2class_py2.p', 'rb'), encoding='bytes')
-
-    #print(data)
+    # if sys.version_info[0] < 3:
+    #     print("system version is less than 3")
+    #     data = pickle.load(open('dataset_folder/cifar_2class_py2.p', 'rb'))
+    #
+    # else:
+    #     #train_x, train_y, test_x, test_y
+    #     data = pickle.load(open('../../dataset_folder/xor_dataset.csv', 'rb'), encoding='bytes')
+    #
+    # #print(data)
     #print(data[b'test_data'])
 
 
-    train_x = np.array(data[b'train_data'])
-    #print("train x shape original is  ",train_x.shape)
-    train_y = np.array(data[b'train_labels'])
-    test_x = np.array(data[b'test_data'])
-    test_y = np.array(data[b'test_labels'])
+
+
+    import csv
+    f = open("xor_data.csv", 'r')
+    reader = csv.reader(f)
+
+    train_x = []
+    train_y = []
+    labels = []
+
+    print(reader)
+
+
+
+
+    for i, row in enumerate(reader):
+            labels.append((row[0]))
+            train_x.append([(x) for x in row[0:2]])
+            train_y.append([(y) for y in row[2]])
+
+    features = np.array(train_x)
+    y = np.array(train_y)
+    print("aaaa",y)
+
+
+
+    for o in features:
+        print("gg",o)
+    print(features.dtype)
+    train_x = np.array([features[0].astype(int) for s in features])
+    train_y = np.array([features[0].astype(int) for s in y])
+
+    print(train_x.dtype)
+
+
+
+
+        #     features = features [0:10,...]
+        #     labels = labels[0:10,...]
+    #    labels[labels == 3.0] = 1
+     #   labels[labels == 5.0] = -1
+
+    #train_y = np.array(reader.y_train)
+
+      # train_x = np.array(data[b'train_data'])
+    # #print("train x shape original is  ",train_x.shape)
+    # train_y = np.array(data[b'train_labels'])
+    # test_x = np.array(data[b'test_data'])
+    # test_y = np.array(data[b'test_labels'])
 
 
 
@@ -498,17 +553,17 @@ if __name__ == '__main__':
 
     #for checking------------------remove paxi
     #print("dtype is ",train_x.dtype)
-    train_x = train_x[0:1000,...]
-    train_y = train_y[0:1000,...]
-    test_x = test_x[0:1000,...]
-    test_y = test_y[0:1000,...]
+    # train_x = train_x[0:1000,...]
+    # train_y = train_y[0:1000,...]
+    # # test_x = test_x[0:1000,...]
+    # test_y = test_y[0:1000,...]
 
 
 
     #print(" minimum in x is ", np.amax(train_x))
 #     print(" maximum in x is ", np.amax(train_x))
-    train_x = normalize(train_x)
-    print(" normalized x is ",train_x)
+#     train_x = normalize(train_x)
+#     print(" normalized x is ",train_x)
 #     print(" maximum in x is ", np.amax(train_x))
 
 
@@ -516,14 +571,14 @@ if __name__ == '__main__':
 
 
     #print(" All shapre are ",train_x.shape,train_y.shape,test_x.shape,test_y.shape)
-    num_examples, input_dims = train_x.shape
+    num_examples, input_dims = 4,2
     #print(" Number of examples and iunput dimensions are ",num_examples, input_dims)
     num_of_hidden_nodes = 2
   # YOU CAN CHANGE num_epochs AND num_batches TO YOUR DESIRED VALUES
 
 
     num_epochs = 10
-    num_batches = 100
+    num_batches = 1
 
     #print("num_examples is ",num_examples)
     num_examples_per_batch = num_examples / num_batches
@@ -549,13 +604,7 @@ if __name__ == '__main__':
 
 	# INSERT YOUR CODE FOR EACH EPOCH HERE
         total_loss_for_epoch = 0.0
-        direction_for_W2 = np.zeros(mlp.linear_transform_object_second.weights.shape)
-        direction_for_W1 = np.zeros(mlp.linear_transform_object_first.weights.shape)
-        direction_for_b2 = np.zeros(mlp.linear_transform_object_second.bias.shape)
-        print("shape linear_transform_object_first.bias ",mlp.linear_transform_object_first.bias.shape)
-        direction_for_b1 = np.zeros(mlp.linear_transform_object_first.bias.shape)
-
-        print("directions ",direction_for_b2.shape)
+        direction = 0
         for b in range(num_batches):
 
 
@@ -578,19 +627,20 @@ if __name__ == '__main__':
 
 
             #print("mlp.x_for_this_batch ",(train_x[batch_start:batch_end,...]).shape)
-            mlp.x_for_this_batch = train_x[batch_start:batch_end,...]
-            mlp.y_for_this_batch = train_y[batch_start:batch_end,...]
-            loss, dE_by_dW2,dE_by_db2,dE_by_dW1,dE_by_db1 = mlp.train(mlp.x_for_this_batch,mlp.y_for_this_batch,int(learning_rate[lr]), inertia_of_momentum[iner], l2_penalty_factor[penalty])
-
-            print(" Initially W2 was and b2 was ", mlp.linear_transform_object_second.weights, mlp.linear_transform_object_second.bias)
-            mlp.weight_update(loss, dE_by_dW2, dE_by_db2, dE_by_dW1, dE_by_db1, learning_rate[lr], direction_for_W2, direction_for_W1, direction_for_b2, direction_for_b1, inertia_of_momentum[iner], l2_penalty_factor[penalty])
-            print(" After the update, W2 was and b2 was ", mlp.linear_transform_object_second.weights, mlp.linear_transform_object_second.bias)
+            mlp.x_for_this_batch = train_x
+            print(mlp.x_for_this_batch)
+            mlp.y_for_this_batch = train_y
+            mlp.y_cap_for_this_batch = mlp.train(mlp.x_for_this_batch,mlp.y_for_this_batch,int(learning_rate[lr]), inertia_of_momentum[iner], l2_penalty_factor[penalty])
 
 
 
 
 
 
+
+            #print("y_cap_for_batch",mlp.y_cap_for_this_batch)
+
+            loss = mlp.evaluate(mlp.y_cap_for_this_batch,mlp.y_for_this_batch )
 
 
 
@@ -598,7 +648,7 @@ if __name__ == '__main__':
 
             #call for weight updates,  need to pass ionly the loss
 
-
+            mlp.weight_update(loss, learning_rate[lr], direction, inertia_of_momentum[iner], l2_penalty_factor[penalty])
 
 
 
@@ -629,6 +679,11 @@ if __name__ == '__main__':
         #do for each epoch this
 
 
-        print('Train Loss: {:.3f}    Train Acc.: {:.2f}%'.format(train_loss,100. * train_accuracy,))
-        print('    Test Loss:  {:.3f}    Test Acc.:  {:.2f}%'.format(test_loss, 100. * test_accuracy,
+        print('    Train Loss: {:.3f}    Train Acc.: {:.2f}%'.format(
+            train_loss,
+            100. * train_accuracy,
+        ))
+        print('    Test Loss:  {:.3f}    Test Acc.:  {:.2f}%'.format(
+            test_loss,
+            100. * test_accuracy,
         ))
