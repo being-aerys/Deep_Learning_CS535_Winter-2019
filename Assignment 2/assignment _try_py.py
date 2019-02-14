@@ -75,7 +75,7 @@ class ReLU(object):
 
     def forward(self, x):
 	# DEFINE forward function
-        print("Relu Input is ",x)
+        #print("Relu Input is ",x)
         relu_output = np.maximum(0,x)
         #print("relu_output is",relu_output)
         return relu_output
@@ -183,18 +183,18 @@ class MLP(object):
 
 
         #np.full((2,2),(1,2)))
-        self.linear_transform_object_first = LinearTransform(np.random.rand(input_dims, hidden_units),np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.random.rand(2,1)))#-----------------------MANUALLY done
-        print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-        print(self.linear_transform_object_first.weights.shape)
-        print(self.linear_transform_object_first.bias.shape)
+        self.linear_transform_object_first = LinearTransform(np.random.rand(input_dims, hidden_units),np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.random.rand(num_of_hidden_nodes,1)))#-----------------------MANUALLY done
+        # print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+        # print(self.linear_transform_object_first.weights.shape)
+        # print(self.linear_transform_object_first.bias.shape)
         self.relu_layer = ReLU()
 
-        print("np.full((1,1),np.random.rand(1))",np.full((1,1),np.random.rand(1)))
+        #print("np.full((1,1),np.random.rand(1))",np.full((1,1),np.random.rand(1)))
         #self.linear_transform_object_second = LinearTransform(np.random.rand(hidden_units, 1), np.full((1,1),np.random.rand(1)))
         self.linear_transform_object_second = LinearTransform(np.random.rand(hidden_units, 1), np.full((1,int(num_examples_per_batch)),np.random.rand(1)))
 
-        print(self.linear_transform_object_second.weights.shape)
-        print(self.linear_transform_object_second.bias.shape)
+        #print(self.linear_transform_object_second.weights.shape)
+        #print(self.linear_transform_object_second.bias.shape)
         self.sigmoid_object_layer = SigmoidCrossEntropy()
 
 
@@ -308,7 +308,7 @@ class MLP(object):
         #dE_by_db2 = np.sum(dE_by_dA2,axis=1)/num_examples_per_batch
         dE_by_db2 = (dE_by_dA2)/num_examples_per_batch
 
-        print("de dE_by_db2 dw2 ",dE_by_db2.shape)
+        #print("de dE_by_db2 dw2 ",dE_by_db2.shape)
 
 
         dE_by_dZ1 = self.linear_transform_object_second.backward(self.Z1, dE_by_dA2, learning_rate, momentum, l2_penalty)
@@ -327,7 +327,7 @@ class MLP(object):
 
         #dE_by_db1 = (np.sum(dE_by_dA1,axis=1))/num_examples_per_batch
         dE_by_db1 = ((dE_by_dA1))/num_examples_per_batch
-        print("dE_by_db1",dE_by_db1.shape)
+        #print("dE_by_db1",dE_by_db1.shape)
 
         #**********************************************Unit test all values may be?
 
@@ -381,22 +381,70 @@ class MLP(object):
 
 
 
-    def evaluate(self, y_cap, y):
+    def evaluate(self,x_data,y_data):
+
+
+        print("\nInside Evaluate() function ")
+        time.sleep(1)
+        x_for_this_batch = np.array(x_data)
+        y_for_this_batch = np.array(y_data)
+
+        loss_val = 0
+
+        for b in range(num_batches):
+
+
+            print("BATCH NUMBER: ", b)
+            print("num examples ",num_examples)
+            #time.sleep(1)
+            #print("num of examples num of batches ",num_examples, " ",num_batches)
 
 
 
-        ############-------------------testing the netwoork
-        time.sleep(1000)
-        print("y cap and y for loss ", y_cap, y)
-        p = np.transpose(y)
+            batch_start = int( (num_examples / num_batches) * b)
+            batch_end = int((num_examples / num_batches)*(b +1))
 
-        loss = -(np.dot(p,np.log(y_cap)) + np.dot((1-p),(np.log(1-y_cap))))
-
+            x_batch = x_for_this_batch[batch_start:batch_end,...]
+            y_batch = y_for_this_batch[batch_start:batch_end,...]
 
 
-        print("loss is  ",loss)
 
-        return loss
+            A1= np.array(self.linear_transform_object_first.forward(x_batch))
+            #print("A1 shape",self.A1.shape)
+            Z1 = np.array(self.relu_layer.forward(A1))
+            #print("Z1 shape",self.Z1.shape)
+
+
+            A2 = np.array(self.linear_transform_object_second.forward_2(Z1))
+            #print("A2 shape",self.A2.shape)
+
+            y_cap = np.array(self.sigmoid_object_layer.forward(A2))
+            #print("y_cap shape",self.y_cap)
+
+
+            #avoid overflow and underflow
+
+            y_cap = np.where(y_cap == 0, 0.00000001, y_cap)
+
+
+            y_cap = np.where(y_cap == 1, 1 - 0.00000001, y_cap)
+
+
+            #calculate the loss for this batch
+            y_transposed = np.transpose(y_batch) #doing transpose to make dimensions compatible
+            y_cap_transposed = np.transpose(y_cap)
+            #print("y ransposed ",y_transposed.shape)
+            #print("y_cap_transposed",y_cap_transposed.shape)
+            loss_val = -(np.dot(y_transposed, np.log(y_cap_transposed)) + np.dot((1 - y_transposed), (np.log(1 - y_cap_transposed))))
+
+            print("Loss value is ",loss_val)
+            #time.sleep(3)
+            loss_val += loss_val
+
+
+
+
+        return loss_val
 
 
 
@@ -412,33 +460,33 @@ class MLP(object):
 
         self.linear_transform_object_second.weights += new_direction_for_W2
 
-        print("old direction b2",direction_b2.shape)
+        #print("old direction b2",direction_b2.shape)
 
-        print("old b2",self.linear_transform_object_second.bias.shape)
+        #print("old b2",self.linear_transform_object_second.bias.shape)
         #print("yo k ho ta ",( np.array(dE_by_db2) + np.dot(l2_penalty_factor, self.linear_transform_object_second.bias )))
         new_direction_for_b2 = inertia_of_momentum * direction_b2 - np.dot(learning_rate, (( np.array(dE_by_db2) + np.dot(l2_penalty_factor, self.linear_transform_object_second.bias ))))
-        print("to add to  direction b2",new_direction_for_b2.shape)
+        #print("to add to  direction b2",new_direction_for_b2.shape)
 
         self.linear_transform_object_second.bias += new_direction_for_b2
 
-        print("new b2 shape ",self.linear_transform_object_second.bias.shape)
+        #print("new b2 shape ",self.linear_transform_object_second.bias.shape)
 
         new_direction_for_W1 = inertia_of_momentum * direction_W1 - np.dot(learning_rate, (( np.transpose(dE_by_dW1) + np.dot(l2_penalty_factor, self.linear_transform_object_first.weights ))))
         self.linear_transform_object_first.weights += new_direction_for_W1
 
 
-        print("old b1 direction",direction_b1.shape)
+        #print("old b1 direction",direction_b1.shape)
 
-        print("old b1",self.linear_transform_object_first.bias.shape)
+        #print("old b1",self.linear_transform_object_first.bias.shape)
 
 
         new_direction_for_b1 = inertia_of_momentum *(direction_b1) - np.dot(learning_rate, (( np.array(dE_by_db1) + np.dot(l2_penalty_factor, (self.linear_transform_object_first.bias )))))
 
-        print("to add to b1 ",new_direction_for_b1.shape)
+        #print("to add to b1 ",new_direction_for_b1.shape)
 
 
         self.linear_transform_object_first.bias += new_direction_for_b1        #= np.sum(np.array(self.linear_transform_object_first.bias), new_value_for_bias1_update)
-        print("b1 shape after update", self.linear_transform_object_first.bias.shape)
+        #print("b1 shape after update", self.linear_transform_object_first.bias.shape)
 
         #return (self.linear_transform_object_second.weights,self.linear_transform_object_second.bias, self.linear_transform_object_first,self.linear_transform_object_first)
 
@@ -498,17 +546,17 @@ if __name__ == '__main__':
 
     #for checking------------------remove paxi
     #print("dtype is ",train_x.dtype)
-    train_x = train_x[0:1000,...]
-    train_y = train_y[0:1000,...]
-    test_x = test_x[0:1000,...]
-    test_y = test_y[0:1000,...]
+    # train_x = train_x[0:5000,...]
+    # train_y = train_y[0:5000,...]
+    # test_x = test_x[0:5000,...]
+    # test_y = test_y[0:5000,...]
 
 
 
     #print(" minimum in x is ", np.amax(train_x))
 #     print(" maximum in x is ", np.amax(train_x))
     train_x = normalize(train_x)
-    print(" normalized x is ",train_x)
+    #print(" normalized x is ",train_x)
 #     print(" maximum in x is ", np.amax(train_x))
 
 
@@ -518,7 +566,7 @@ if __name__ == '__main__':
     #print(" All shapre are ",train_x.shape,train_y.shape,test_x.shape,test_y.shape)
     num_examples, input_dims = train_x.shape
     #print(" Number of examples and iunput dimensions are ",num_examples, input_dims)
-    num_of_hidden_nodes = 2
+    num_of_hidden_nodes = 5
   # YOU CAN CHANGE num_epochs AND num_batches TO YOUR DESIRED VALUES
 
 
@@ -527,12 +575,12 @@ if __name__ == '__main__':
 
     #print("num_examples is ",num_examples)
     num_examples_per_batch = num_examples / num_batches
-    learning_rate = [0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]
+    learning_rate = [0.0000001,0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]
     inertia_of_momentum = [0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]
     l2_penalty_factor = [0.0000001,0.0000003,0.000001,0.000003,0.00001,0.00003,0.0001,0.0003,0.001,0.003,0.01,0.03,1,3,10]
     print("Choose the corresponding index number for the learning rate you want to use")
     #lr = int(input("[0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]"))
-    lr =5
+    lr =1
     print("Choose the corresponding index number for the inertia of momentum you want to use")
     #iner = int(input("[0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]"))
     iner = 1
@@ -552,14 +600,14 @@ if __name__ == '__main__':
         direction_for_W2 = np.zeros(mlp.linear_transform_object_second.weights.shape)
         direction_for_W1 = np.zeros(mlp.linear_transform_object_first.weights.shape)
         direction_for_b2 = np.zeros(mlp.linear_transform_object_second.bias.shape)
-        print("shape linear_transform_object_first.bias ",mlp.linear_transform_object_first.bias.shape)
+        #print("shape linear_transform_object_first.bias ",mlp.linear_transform_object_first.bias.shape)
         direction_for_b1 = np.zeros(mlp.linear_transform_object_first.bias.shape)
 
-        print("directions ",direction_for_b2.shape)
+        #print("directions ",direction_for_b2.shape)
         for b in range(num_batches):
 
 
-
+            print("BATCH NUMBER: ", b)
             #print("num of examples num of batches ",num_examples, " ",num_batches)
 
 
@@ -580,23 +628,18 @@ if __name__ == '__main__':
             #print("mlp.x_for_this_batch ",(train_x[batch_start:batch_end,...]).shape)
             mlp.x_for_this_batch = train_x[batch_start:batch_end,...]
             mlp.y_for_this_batch = train_y[batch_start:batch_end,...]
+
+            #__________________________________________________________________TRAINING_____________________________________________________________________________
             loss, dE_by_dW2,dE_by_db2,dE_by_dW1,dE_by_db1 = mlp.train(mlp.x_for_this_batch,mlp.y_for_this_batch,int(learning_rate[lr]), inertia_of_momentum[iner], l2_penalty_factor[penalty])
 
-            print(" Initially W2 was and b2 was ", mlp.linear_transform_object_second.weights, mlp.linear_transform_object_second.bias)
+            #print(" Initially W2 was and b2 was ", mlp.linear_transform_object_second.weights, mlp.linear_transform_object_second.bias)
+
+            #___________________________________________________________________WEIGHT UPDATE_________________________________________________________________________________
             mlp.weight_update(loss, dE_by_dW2, dE_by_db2, dE_by_dW1, dE_by_db1, learning_rate[lr], direction_for_W2, direction_for_W1, direction_for_b2, direction_for_b1, inertia_of_momentum[iner], l2_penalty_factor[penalty])
-            print(" After the update, W2 was and b2 was ", mlp.linear_transform_object_second.weights, mlp.linear_transform_object_second.bias)
-
-
-
-
-
-
-
-
+            #print(" After the update, W2 was and b2 was ", mlp.linear_transform_object_second.weights, mlp.linear_transform_object_second.bias)
 
             total_loss_for_epoch = total_loss_for_epoch + loss
 
-            #call for weight updates,  need to pass ionly the loss
 
 
 
@@ -625,10 +668,29 @@ if __name__ == '__main__':
         # MAKE SURE TO COMPUTE train_loss, train_accuracy, test_loss, test_accuracy
 
 
-        print()
+
         #do for each epoch this
 
+        #each epeoch ko end ma training ra testing duitai data ma test garne aaba
 
-        print('Train Loss: {:.3f}    Train Acc.: {:.2f}%'.format(train_loss,100. * train_accuracy,))
-        print('    Test Loss:  {:.3f}    Test Acc.:  {:.2f}%'.format(test_loss, 100. * test_accuracy,
-        ))
+        #tesko lagi evaluate function banai
+
+
+        #------------------------------------Lets test the network------------------------------------------------------------------------------
+        print("Evaluating loss for training data")
+        time.sleep(1)
+
+        training_loss_for_this_epoch = mlp.evaluate(train_x,train_y)
+        print("Evaluating loss for testing data")
+        time.sleep(1)
+        testing_loss_for_this_epoch = mlp.evaluate(test_x,test_y)
+
+        print("Training loss for this epoch", training_loss_for_this_epoch)
+
+        time.sleep(1)
+        print("Testing loss for this epoch ",testing_loss_for_this_epoch)
+        time.sleep(1)
+
+
+        #print('Train Loss: {:.3f}    Train Acc.: {:.2f}%'.format(training_loss_for_this_epoch,100. * train_accuracy,))
+        # print('    Test Loss:  {:.3f}    Test Acc.:  {:.2f}%'.format(testing_loss_for_this_epoch, 100. * test_accuracy,))
