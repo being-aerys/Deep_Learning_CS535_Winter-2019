@@ -15,27 +15,39 @@ except:
 
 import numpy as np
 import math
+import matplotlib.pyplot as plt
+
+testing_time = False
 
 
 class LinearTransform(object):
 
-    def __init__(self, W, b): #linear transform ma kina weight diyo budo le bhaneko ta duit hau ma obj banauda farak farak
-                                #diyera banauna ko lagi rahexa
-        self.weights = W #weights for all n nodes in the hidden layer
+    def __init__(self, W, b):
+
+        self.weights = W
+        print("Random weights ",self.weights)
 
         self.bias = b
+        print("Random bias ",self.bias)
+        #time.sleep(5)
 
 
 
     def forward(self, x):
-        #print("aa",x.shape,self.weights.shape)
+
         #Never do this because it does element-wise and this gives an error
         #batch_linear_summation = x * self.weights# + self.bias
 
         #print("First linear transform ", np.dot(np.transpose(self.weights),np.transpose(x) ) .shape,self.bias.shape)
 
-        print("np.dot(np.transpose(self.weights),np.transpose(x) )",np.dot(np.transpose(self.weights),np.transpose(x) ).shape)
-        print("self.bias",self.bias.shape)
+        # print("np.dot(np.transpose(self.weights),np.transpose(x) )",np.dot(np.transpose(self.weights),np.transpose(x) ).shape)
+        # print("self.bias",self.bias.shape)
+        #
+        # print("first ",np.transpose(self.weights).shape)
+        # print("second ",np.transpose(x).shape)
+        # print("First ",np.dot(np.transpose(self.weights),np.transpose(x) ).shape)
+        # print("\nself.bias ",self.bias.shape)
+
         batch_linear_summation = np.dot(np.transpose(self.weights),np.transpose(x) ) + self.bias
 
 
@@ -65,7 +77,7 @@ class LinearTransform(object):
 
 
 
-        print()
+
 	# DEFINE backward function
 
 
@@ -85,7 +97,7 @@ class ReLU(object):
 
         #print("Relu backeard bhitra ", input, grad_output)
         dZ1_by_dA1 = input
-        print("here",dZ1_by_dA1.dtype)
+        #print("here",dZ1_by_dA1.dtype)
 
         np.where(dZ1_by_dA1 == 0, np.random.uniform(0.00001,1), dZ1_by_dA1)
         np.where(dZ1_by_dA1 < 0, 0, dZ1_by_dA1)
@@ -103,9 +115,6 @@ class ReLU(object):
 
 
 
-# This is a class for a sigmoid layer followed by a cross entropy layer, the reason
-# this is put into a single layer is because it has a simple gradient form
-
 
 
 class SigmoidCrossEntropy(object):
@@ -115,14 +124,7 @@ class SigmoidCrossEntropy(object):
         #self.linear_transform_object_2 = LinearTransform(self.second_layer_weights,self.second_layer_bias)
 
     def forward(self, x):
-#         linear_summation = self.linear_transform_object_2.forward(self,x)
-#         print("linear summation size ",linear_summation.shape)
-#         #linear transform gar paile
-        #ani balla sigmoid
-
-
-
-        #print("sigmoid ma aayeko input ", x)
+#
         self.input_values = x
         sigmoid =  (1 / (1 + np.exp(-x)))
         #print("sigmoid is ", sigmoid)
@@ -135,42 +137,8 @@ class SigmoidCrossEntropy(object):
         #print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",dE_by_dA2.shape)
         return(dE_by_dA2 )
 
-        # print("#here hai",dE_by_dA2,l2_penalty, second_layer_wts)
-        # direction_updated_weights_2 = momentum * direction - np.dot(learning_rate, ( dE_by_dA2 + np.dot(l2_penalty, second_layer_wts )))
-        #
-        # direction_updated_bias_2 = momentum * direction - np.dot(learning_rate, ( dE_by_dA2 + np.dot(l2_penalty, second_layer_bias )))
-        #
-        # print("direction updated orr weight update is ",direction_updated_weights_2)
-        # print("bias direction updated orr bias update is ",direction_updated_bias_2)
-        #
-        #
-        # second_layer_wts = second_layer_wts - direction_updated_weights_2
-        # second_layer_bias = second_layer_bias - direction_updated_bias_2
-
-
-
-
-        #-----------------------------------------------
-        #call the previous layer for updates on the previous layer weights
-
-        #backward_return_for_sencond_linear_transform = self.linear_transform_object_for_sigmoid.backward(self,grad_output, learning_rate,direction, momentum, l2_penalty,second_layer_wts,second_layer_bias)
-
-
-
-
-
-
-
-
-
-
-
-
 
 # This is a class for the Multilayer perceptron
-
-
-
 
 class MLP(object):
 
@@ -184,7 +152,6 @@ class MLP(object):
 
         #np.full((2,2),(1,2)))
         self.linear_transform_object_first = LinearTransform(np.random.rand(input_dims, hidden_units),np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.random.rand(num_of_hidden_nodes,1)))#-----------------------MANUALLY done
-        # print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         # print(self.linear_transform_object_first.weights.shape)
         # print(self.linear_transform_object_first.bias.shape)
         self.relu_layer = ReLU()
@@ -243,10 +210,10 @@ class MLP(object):
 
         #avoid overflow and underflow
 
-        self.y_cap = np.where(self.y_cap == 0, 0.00000001, self.y_cap)
+        self.y_cap = np.where(self.y_cap == 0, 0.0000000000001, self.y_cap)
 
 
-        self.y_cap = np.where(self.y_cap == 1, 1 - 0.00000001, self.y_cap)
+        self.y_cap = np.where(self.y_cap == 1, 1 - 0.00000000001, self.y_cap)
 
 
         #calculate the loss for this batch
@@ -266,41 +233,16 @@ class MLP(object):
 
 
 
-        #******************Check dimension of each one of them
-        # print(" Dimensions of X1, A1",self.x_for_this_batch.shape)
-        # print("Dimensions of Z1, A2",self.Z1.shape,self.A2.shape)
-
-
-
-
-        #calculate the grad output to send to the backward fucntion of sigmod cross entropy
-
-
-
-        #print("(self.y_for_this_batch-self.y_cap)",self.y_for_this_batch,self.y_cap)
-
-
-
-        #dE_by_dy_cap = -(np.divide((self.y_for_this_batch), (self.y_cap)) - (np.divide((1 - self.y_for_this_batch), (1 - self.y_cap))))
 
         dE_by_dy_cap = -(np.divide((np.transpose(self.y_for_this_batch)-self.y_cap),(np.multiply(self.y_cap,(1-self.y_cap)))))
 
 
 
 
-        #print("************ dE_by_dy_cap",dE_by_dy_cap.shape)
 
         dE_by_dA2 = self.sigmoid_object_layer.backward(input, self.y_for_this_batch, self.y_cap, dE_by_dy_cap, learning_rate, direction_for_W2, momentum, l2_penalty, self.linear_transform_object_second.weights, self.linear_transform_object_second.bias)
 
 
-        #print("dE_by_dA2 shape ",dE_by_dA2.shape)
-
-        #direction_updated_weights_2, direction_updated_bias_2, backward_return_for_sencond_linear_transform = self.sigmoid_object_layer.backward(input, self.y_for_this_batch, self.sigmoid_layer_op, dE_by_dy_cap, learning_rate,direction, momentum, l2_penalty,self.linear_transform_object_for_sigmoid.weights, self.linear_transform_object_for_sigmoid.bias)
-
-
-
-
-        #print(" Sigmoid Cross Entropy backward returns ",dE_by_dA2.shape)
 
         #print("Shape of W2 is ",self.linear_transform_object_second.weights)
         dE_by_dW2 = np.dot(dE_by_dA2,np.transpose(self.Z1)) / num_examples_per_batch #averaging the update
@@ -340,27 +282,26 @@ class MLP(object):
 
 
 
-        print("\n\n\nFollowing are the dimensions of all the components")
-
-
-        print("x_for_this_batch shape",self.x_for_this_batch.shape)
-        print("\n\ny for this batch",self.y_for_this_batch.shape)
-        print("\nA1",self.A1.shape)
-        print("\nZ1",self.Z1.shape)
-        print("\nA2",self.A2.shape)
-        print("\nZ2",self.y_cap.shape)
-        print("\ny transpose ",y_transposed.shape)
-        print("\ny cap transpose ",y_cap_transposed.shape)
-        print("\ndE+by_dy_cap ",dE_by_dy_cap.shape)
-        print("\ndE_by_dA2 ",dE_by_dA2.shape)
-        print("\ndE_by_dW2 ",dE_by_dW2.shape)
-        #print("\nsecpn layer weights",mlp.linear_transform_object_second.weights.shape)
-        print("\ndE_by_db2 ",dE_by_db2.shape)
-        print("\ndE_by_dZ1 ",dE_by_dZ1.shape)
-        print("\ndE_by_dA1 ",dE_by_dA1.shape)
-        print("\ndE_by_dW1 ",dE_by_dW1.shape)
-        print("dE_by_db1 ",dE_by_db1.shape)
-        print("\nThe loss is ",loss)
+        # print("\n\n\nFollowing are the dimensions of all the components")
+        # print("x_for_this_batch shape",self.x_for_this_batch.shape)
+        # print("\n\ny for this batch",self.y_for_this_batch.shape)
+        # print("\nA1",self.A1.shape)
+        # print("\nZ1",self.Z1.shape)
+        # print("\nA2",self.A2.shape)
+        # print("\nZ2",self.y_cap.shape)
+        # print("\ny transpose ",y_transposed.shape)
+        # print("\ny cap transpose ",y_cap_transposed.shape)
+        # print("\ndE+by_dy_cap ",dE_by_dy_cap.shape)
+        # print("\ndE_by_dA2 ",dE_by_dA2.shape)
+        # print("\ndE_by_dW2 ",dE_by_dW2.shape)
+        # #print("\nsecpn layer weights",mlp.linear_transform_object_second.weights.shape)
+        # print("\ndE_by_db2 ",dE_by_db2.shape)
+        # print("\ndE_by_dZ1 ",dE_by_dZ1.shape)
+        # print("\ndE_by_dA1 ",dE_by_dA1.shape)
+        # print("\ndE_by_dW1 ",dE_by_dW1.shape)
+        # print("dE_by_db1 ",dE_by_db1.shape)
+        # print("\nThe loss is ",loss)
+        #time.sleep(5)
 
         return(loss, dE_by_dW2,dE_by_db2,dE_by_dW1,dE_by_db1)
 
@@ -383,30 +324,46 @@ class MLP(object):
 
     def evaluate(self,x_data,y_data):
 
+        #print("y length sent to evaluat ",len(y_data))
+        #time.sleep(111)
 
-        print("\nInside Evaluate() function ")
-        time.sleep(1)
+        #print("\nInside Evaluate() function ")
+        #time.sleep(1)
         x_for_this_batch = np.array(x_data)
         y_for_this_batch = np.array(y_data)
 
         loss_val = 0
+        total_examples_inside_evaluate = 0
 
-        for b in range(num_batches):
+
+        for b in range(int(num_batches_for_test_time)):
+            print("BATCH NUMBER for evaluation: ", b)
+            #print("tOTAL EXAMPLES obtained IN EVALUTE TILL NOW ", total_examples_inside_evaluate)
 
 
-            print("BATCH NUMBER: ", b)
-            print("num examples ",num_examples)
+            #print("num examples ",num_examples)
             #time.sleep(1)
             #print("num of examples num of batches ",num_examples, " ",num_batches)
+            print("for this data total loss till now is ",loss_val)
 
 
 
             batch_start = int( (num_examples / num_batches) * b)
             batch_end = int((num_examples / num_batches)*(b +1))
 
-            x_batch = x_for_this_batch[batch_start:batch_end,...]
-            y_batch = y_for_this_batch[batch_start:batch_end,...]
+            #print("for this batch batch start ",batch_start)
+            #print("batch ebnd", batch_end)
+            #time.sleep(3)
 
+
+            x_batch = x_for_this_batch[batch_start:batch_end,...]
+
+            y_batch = y_for_this_batch[batch_start:batch_end,...]
+            #print("inside ealutate 1 batch size is  ",len(y_batch))
+            #time.sleep(1)
+            #total_examples_inside_evaluate = total_examples_inside_evaluate +
+
+            total_examples_inside_evaluate = total_examples_inside_evaluate + len(y_batch)
 
 
             A1= np.array(self.linear_transform_object_first.forward(x_batch))
@@ -419,7 +376,7 @@ class MLP(object):
             #print("A2 shape",self.A2.shape)
 
             y_cap = np.array(self.sigmoid_object_layer.forward(A2))
-            #print("y_cap shape",self.y_cap)
+
 
 
             #avoid overflow and underflow
@@ -432,19 +389,28 @@ class MLP(object):
 
             #calculate the loss for this batch
             y_transposed = np.transpose(y_batch) #doing transpose to make dimensions compatible
+            #print("y ",y_batch)
+            #print("y_cap ",y_cap)
+            #time.sleep(5)
+
             y_cap_transposed = np.transpose(y_cap)
             #print("y ransposed ",y_transposed.shape)
             #print("y_cap_transposed",y_cap_transposed.shape)
             loss_val = -(np.dot(y_transposed, np.log(y_cap_transposed)) + np.dot((1 - y_transposed), (np.log(1 - y_cap_transposed))))
 
-            print("Loss value is ",loss_val)
+            #print("Loss value is ",loss_val)
             #time.sleep(3)
+            print("new loss val to add is ",loss_val)
             loss_val += loss_val
+            print("is the loss value added? ", loss_val)
+            #time.sleep(5)
 
 
 
+        print("loss val for whole data is ", loss_val)
+        #time.sleep(100)
 
-        return loss_val
+        return loss_val[0][0] #yesto nagare 2-dimensional array return garxa feri
 
 
 
@@ -537,6 +503,8 @@ if __name__ == '__main__':
 
 
 
+
+
     def normalize(x):
 
         top = x - np.amin(x)
@@ -546,10 +514,10 @@ if __name__ == '__main__':
 
     #for checking------------------remove paxi
     #print("dtype is ",train_x.dtype)
-    # train_x = train_x[0:5000,...]
-    # train_y = train_y[0:5000,...]
-    # test_x = test_x[0:5000,...]
-    # test_y = test_y[0:5000,...]
+    train_x = train_x[0:10000,...]
+    train_y = train_y[0:10000,...]
+    test_x = test_x[0:10000,...]
+    test_y = test_y[0:10000,...]
 
 
 
@@ -566,27 +534,34 @@ if __name__ == '__main__':
     #print(" All shapre are ",train_x.shape,train_y.shape,test_x.shape,test_y.shape)
     num_examples, input_dims = train_x.shape
     #print(" Number of examples and iunput dimensions are ",num_examples, input_dims)
-    num_of_hidden_nodes = 5
+    num_of_hidden_nodes = 10
   # YOU CAN CHANGE num_epochs AND num_batches TO YOUR DESIRED VALUES
 
 
-    num_epochs = 10
+    num_epochs = 15
+
+    epoch_list_for_plot = []
+    Training_Loss_list = []
+    Testing_Loss_list = []
+
+
     num_batches = 100
+    num_batches_for_test_time = num_batches / (len(train_y)/len(test_y)) #
 
     #print("num_examples is ",num_examples)
     num_examples_per_batch = num_examples / num_batches
     learning_rate = [0.0000001,0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]
-    inertia_of_momentum = [0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]
+    inertia_of_momentum = [0.001,0.003,0.01,0.03,0.1,0.3,0.5,0.6,0.7,0.8,0.9,1,3,10]
     l2_penalty_factor = [0.0000001,0.0000003,0.000001,0.000003,0.00001,0.00003,0.0001,0.0003,0.001,0.003,0.01,0.03,1,3,10]
-    print("Choose the corresponding index number for the learning rate you want to use")
+    #print("Choose the corresponding index number for the learning rate you want to use")
     #lr = int(input("[0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]"))
     lr =1
-    print("Choose the corresponding index number for the inertia of momentum you want to use")
+    #print("Choose the corresponding index number for the inertia of momentum you want to use")
     #iner = int(input("[0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]"))
-    iner = 1
-    print("Choose the corresponding index number for the L2 penalty factor you want to use")
+    iner = 10
+    #print("Choose the corresponding index number for the L2 penalty factor you want to use")
     #penalty = int(input("[0.0000001,0.0000003,0.000001,0.000003,0.00001,0.00003,0.0001,0.0003,0.001,0.003,0.01,0.03,1,3,10]"))
-    penalty = 1
+    penalty = 14
     mlp = MLP(input_dims, num_of_hidden_nodes)
 
 
@@ -641,17 +616,6 @@ if __name__ == '__main__':
             total_loss_for_epoch = total_loss_for_epoch + loss
 
 
-
-
-
-
-
-
-
-
-
-
-
             # INSERT YOUR CODE FOR EACH MINI_BATCH HERE
             # MAKE SURE TO UPDATE total_loss
 
@@ -662,7 +626,7 @@ if __name__ == '__main__':
             #after each mini bach update you want to update the momentum value
             sys.stdout.flush()
             # INSERT YOUR CODE AFTER ALL MINI_BATCHES HERE
-        epoch_num +=1
+
 
         direction = 0
         # MAKE SURE TO COMPUTE train_loss, train_accuracy, test_loss, test_accuracy
@@ -678,19 +642,39 @@ if __name__ == '__main__':
 
         #------------------------------------Lets test the network------------------------------------------------------------------------------
         print("Evaluating loss for training data")
-        time.sleep(1)
+        #time.sleep(1)
 
         training_loss_for_this_epoch = mlp.evaluate(train_x,train_y)
+        Training_Loss_list.append(training_loss_for_this_epoch)
         print("Evaluating loss for testing data")
-        time.sleep(1)
+        #time.sleep(1)
+        #testing_time = True
         testing_loss_for_this_epoch = mlp.evaluate(test_x,test_y)
-
+        Testing_Loss_list.append(testing_loss_for_this_epoch)
+        # testing_time = True
         print("Training loss for this epoch", training_loss_for_this_epoch)
 
-        time.sleep(1)
+        #time.sleep(5)
+        #print("For testing data now")
         print("Testing loss for this epoch ",testing_loss_for_this_epoch)
-        time.sleep(1)
+        #time.sleep(1)
 
 
+        #plot the results
+        epoch_list_for_plot.append(epoch_num)
+        #plt.plot([1,2,3],[3,4,5])
+
+        print(" Epoch list Training Accuracy Testing Accuracy ", epoch_list_for_plot, Training_Loss_list, Testing_Loss_list)
+        plt.plot(epoch_list_for_plot, Training_Loss_list, 'g', label="Training Loss") #pass array or list
+        plt.plot(epoch_list_for_plot, Testing_Loss_list, 'r', label="Testing Loss")
+        plt.xlabel("Number of Epochs")
+        plt.ylabel("Number of Incorrect Predictions")
+        plt.title("Number of Epochs VS Accuracies")
+
+
+        epoch_num +=1
         #print('Train Loss: {:.3f}    Train Acc.: {:.2f}%'.format(training_loss_for_this_epoch,100. * train_accuracy,))
         # print('    Test Loss:  {:.3f}    Test Acc.:  {:.2f}%'.format(testing_loss_for_this_epoch, 100. * test_accuracy,))
+
+
+    plt.show()
