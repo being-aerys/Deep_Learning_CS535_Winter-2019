@@ -37,7 +37,6 @@ class LinearTransform(object):
         #batch_linear_summation = x * self.weights# + self.bias
 
 
-        print("dimension of x encountered is  ",x.shape)
         batch_linear_summation = np.dot(np.transpose(self.weights),np.transpose(x) ) + self.bias
         #print("ss",batch_linear_summation)
         #time.sleep(5)
@@ -50,7 +49,6 @@ class LinearTransform(object):
     def forward_2(self,x):
 
         #print("shapes of x, self.weights, bias", self.weights.shape,x.shape,self.bias.shape)
-        print("dimension of x encountered is  ",x.shape)
         #time.sleep(111)
         batch_linear_summation_without_sigmoid = np.dot(np.transpose(self.weights),x)+self.bias
         #print("batch_linear_summation_without_sigmoid",batch_linear_summation_without_sigmoid.shape)
@@ -158,12 +156,12 @@ class MLP(object):
 
 
 
-        self.linear_transform_object_first = LinearTransform(0.01 * np.random.randn(input_dims, hidden_units),0.01 * np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.zeros((num_of_hidden_nodes,1))))#-----------------------MANUALLY done
+        self.linear_transform_object_first = LinearTransform(0.01 * np.random.randn(input_dims, hidden_units),0.01 * np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.random.random((num_of_hidden_nodes,1))))#-----------------------MANUALLY done
 
         self.relu_layer = ReLU()
 
 
-        self.linear_transform_object_second = LinearTransform(0.01 * np.random.randn(hidden_units, 1), 0.01 * np.full((1,int(num_examples_per_batch)),np.zeros(1)))
+        self.linear_transform_object_second = LinearTransform(0.01 * np.random.randn(hidden_units, 1), 0.01 * np.full((1,int(num_examples_per_batch)),np.random.random(1)))
 
 
 
@@ -211,7 +209,7 @@ class MLP(object):
 #-------------------------------------------------removing to chack if small or not
         # avoid overflow and underflow
         #
-        print("self y cap ",self.y_cap)
+        #print("self y cap ",self.y_cap)
         self.y_cap = np.where(self.y_cap == 0, 0.00001, self.y_cap)
 
 
@@ -253,14 +251,14 @@ class MLP(object):
 
         #print("Shape of W2 is ",self.linear_transform_object_second.weights)
 
-        dE_by_dW2 = (np.dot(dE_by_dA2,np.transpose(self.Z1))) # divide by batch size
+        dE_by_dW2 = (np.dot(dE_by_dA2,np.transpose(self.Z1)))/ num_examples_per_batch # divide by batch size
         #print("shapesaaaa ",dE_by_dW2.shape)
         #
 
 
 
         #dE_by_db2 = np.sum(dE_by_dA2,axis=1)/num_examples_per_batch
-        dE_by_db2 = (dE_by_dA2)
+        dE_by_db2 = (dE_by_dA2)/ num_examples_per_batch
 
         #print("de dE_by_db2 dw2 ",dE_by_db2.shape)
         #time.sleep(1111)
@@ -303,10 +301,10 @@ class MLP(object):
         #dE_by_db1 = np.sum(dE_by_dA1_unsummed,axis = 0)/num_examples_per_batch
 
         #print(dE_by_dA1_unsummed.shape, self.x_for_this_batch.shape)
-        dE_by_dW1 = np.dot(np.transpose(dE_by_dA1_unsummed), self.x_for_this_batch)
+        dE_by_dW1 = np.dot(np.transpose(dE_by_dA1_unsummed), self.x_for_this_batch)/ num_examples_per_batch
 
         #print(dE_by_dW1.shape)
-        dE_by_db1 = np.transpose(dE_by_dA1_unsummed)
+        dE_by_db1 = np.transpose(dE_by_dA1_unsummed)/ num_examples_per_batch
 
         #time.sleep(111)
 
@@ -329,7 +327,8 @@ class MLP(object):
         #*********************************Update both the weights simultaneopusly at the end
 
 
-
+        # 0 1 1 1 1 0 0 1 1 1 0 0 1 1 0 1 0 1 0 0 0 0 1 0 1 1 0 1 1 1 0 0 0 0 1 1
+        # 0 1 1 1 1 0 0 1 1 1 0 0 1 1 0 1 0 1 0 0 0 0 1 0 1 1 0 1 1 1 0 0 0 0 1 1
 
 
         # print("\n\n\nFollowing are the dimensions of all the components")
@@ -379,8 +378,8 @@ class MLP(object):
         if check_tr_or_test == 0:  #training data
 
 
-            x_for_this_batch = np.array(x_data)
-            y_for_this_batch = np.array(y_data)
+            x_for_this_batch_tr = np.array(x_data)
+            y_for_this_batch_tr = np.array(y_data)
 
             loss_val = 0
             total_acc_for_whole_data = 0
@@ -408,9 +407,9 @@ class MLP(object):
                 #time.sleep(3)
 
 
-                x_batch = x_for_this_batch[batch_start:batch_end,...]
+                x_batch = x_for_this_batch_tr[batch_start:batch_end,...]
 
-                y_batch = y_for_this_batch[batch_start:batch_end,...]
+                y_batch = y_for_this_batch_tr[batch_start:batch_end,...]
                 #print("inside ealutate 1 batch size is  ",len(y_batch))
                 #time.sleep(1)
                 #total_examples_inside_evaluate = total_examples_inside_evaluate +
@@ -450,9 +449,9 @@ class MLP(object):
 
                 #----------------calculat eaccuracy
                 #print(y_transposed)
-                print("\n\nIn evaluate for training data",y_cap_evaluate)
+                #print("\n\nIn evaluate for training data",y_cap_evaluate)
                 accuracy = np.sum (y_transposed == y_cap_evaluate)
-                print("accuracy in training evaluation is ",accuracy)
+                #print("accuracy in training evaluation is ",accuracy)
                 #time.sleep(3)
 
 
@@ -461,9 +460,9 @@ class MLP(object):
 
                 #print("Loss value is ",loss_val)
                 #time.sleep(3)
-                print("old training data accuracy for whole is  ",total_acc_for_whole_data)
+                #print("old training data accuracy for whole is  ",total_acc_for_whole_data)
                 total_acc_for_whole_data += accuracy
-                print("New accuracy? ", total_acc_for_whole_data)
+                #print("New accuracy? ", total_acc_for_whole_data)
                 #time.sleep(3)
 
 
@@ -477,7 +476,7 @@ class MLP(object):
 
 
         else:   #testing data
-            print("no of batch for testing", int(2000/int(num_examples_per_batch)))
+            #print("no of batch for testing", int(2000/int(num_examples_per_batch)))
             x_for_this_batch_test = np.array(x_data)
             y_for_this_batch_test = np.array(y_data)
 
@@ -529,9 +528,10 @@ class MLP(object):
                 #time.sleep(9888)
                 y_cap_evaluate = np.array(self.sigmoid_object_layer.forward(A2))
                 #print("y cap evaluate before adjusting for test ", y_cap_evaluate)
+                #time.sleep(111)
                 y_cap_evaluate = np.where(y_cap_evaluate >0.5, 1, 0)
                 #print("y cap in evaluate test data  after adjusting is  ",y_cap_evaluate)
-
+                #time.sleep(111)
 
 
                 y_transposed = np.transpose(y_batch) #doing transpose to make dimensions compatible
@@ -557,9 +557,9 @@ class MLP(object):
 
                 #print("Loss value is ",loss_val)
                 #time.sleep(3)
-                print("old test accuracy for all test data is  ",total_acc_for_whole_data_test)
+                #print("old test accuracy for all test data is  ",total_acc_for_whole_data_test)
                 total_acc_for_whole_data_test += accuracy
-                print("New test accuracy for all test data ", total_acc_for_whole_data_test)
+                #print("New test accuracy for all test data ", total_acc_for_whole_data_test)
                 #time.sleep(3)
 
 
@@ -603,6 +603,24 @@ class MLP(object):
         direction_for_W1 = np.multiply(inertia_of_momentum , direction_W1) - np.dot(learning_rate, (( np.transpose(dE_by_dW1) + np.dot(l2_penalty_factor, self.linear_transform_object_first.weights ))))
 
         self.linear_transform_object_first.weights =  self.linear_transform_object_first.weights + direction_for_W1
+        print(self.linear_transform_object_first.weights.shape)
+        #time.sleep(22)
+
+
+
+
+
+        #---------------need to do the divifsion on summaitno of weights
+
+
+
+
+
+
+
+
+
+
 
         #self.linear_transform_object_first.weights-=learning_rate * np.transpose(dE_by_dW1)
 
@@ -665,9 +683,10 @@ if __name__ == '__main__':
 
 
 
-    train_x = (train_x - train_x.min(axis = 0)) / (train_x.max(axis = 0)- train_x.min(axis = 0)) #taking normalized values, take max and min of each column
-    test_x = (test_x - test_x.min(axis = 0)) / (test_x.max(axis = 0)- test_x.min(axis = 0))
-
+    train_x = (train_x - train_x.min(axis = 0)) / np.var(train_x,axis= 0) #taking normalized values, take max and min of each column
+    test_x = (test_x - test_x.min(axis = 0)) / np.var(test_x,axis= 0)
+    #print(train_x,test_x)
+    #time.sleep(111)
 
     num_examples, input_dims = train_x.shape
     num_of_hidden_nodes = 20
@@ -675,24 +694,24 @@ if __name__ == '__main__':
     epoch_list_for_plot = []
     Training_accuracy_list = []
     Testing_accuracy_list = []
-    num_batches = 10
+    num_batches = 1000
     #num_batches_for_test_time = num_batches / (len(train_y)/len(test_y)) #
 
     num_examples_per_batch = num_examples / num_batches
 
 
     learning_rate = [0.6,0.00000001,0.001,0.002,0.003,0.01,0.03,0.1,0.3,1,3,10,20]
-    inertia_of_momentum = [0.0,0.001,0.003,0.005,0.008,0.01,0.03,0.1,0.3,0.5,0.6,0.7,0.8,0.9,1,3,10]
+    inertia_of_momentum = [10,0.001,0.003,0.005,0.008,0.01,0.03,0.1,0.3,0.5,0.6,0.7,0.8,0.9,1,3,10]
     l2_penalty_factor = [0.0,0.0000001,0.0000003,0.000001,0.000003,0.00001,0.00003,0.0001,0.0003,0.001,0.003,0.01,0.03,1,3,10,20]
     #print("Choose the corresponding index number for the learning rate you want to use")
     #lr = int(input("[0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]"))
-    lr =0
+    lr =  0
     #print("Choose the corresponding index number for the inertia of momentum you want to use")
     #iner = int(input("[0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]"))
     iner = 3
     #print("Choose the corresponding index number for the L2 penalty factor you want to use")
     #penalty = int(input("[0.0000001,0.0000003,0.000001,0.000003,0.00001,0.00003,0.0001,0.0003,0.001,0.003,0.01,0.03,1,3,10]"))
-    penalty = 10
+    penalty = 0
 
 
     mlp = MLP(input_dims, num_of_hidden_nodes)
@@ -754,12 +773,12 @@ if __name__ == '__main__':
         print(" total_loss_for_epoch",epoch_num," is ",total_loss_for_epoch)
 
         #reset weights after each epoch
-        # mlp.linear_transform_object_first = LinearTransform(0.001 * np.random.randn(input_dims, num_of_hidden_nodes),0.001 * np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.zeros((num_of_hidden_nodes,1))))#-----------------------MANUALLY done
-        #
-        #
-        #
-        #
-        # mlp.linear_transform_object_second = LinearTransform(0.001 * np.random.randn(num_of_hidden_nodes, 1), 0.001 * np.full((1,int(num_examples_per_batch)),np.zeros(1)))
+        mlp.linear_transform_object_first = LinearTransform(0.001 * np.random.randn(input_dims, num_of_hidden_nodes),0.001 * np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.zeros((num_of_hidden_nodes,1))))#-----------------------MANUALLY done
+
+
+
+
+        mlp.linear_transform_object_second = LinearTransform(0.001 * np.random.randn(num_of_hidden_nodes, 1), 0.001 * np.full((1,int(num_examples_per_batch)),np.zeros(1)))
 
         # direction_for_W2 = np.zeros(mlp.linear_transform_object_second.weights.shape)
         # direction_for_W1 = np.zeros(mlp.linear_transform_object_first.weights.shape)
@@ -798,6 +817,7 @@ if __name__ == '__main__':
         epoch_num +=1
         #print('Train Loss: {:.3f}    Train Acc.: {:.2f}%'.format(training_loss_for_this_epoch,100. * train_accuracy,))
         # print('    Test Loss:  {:.3f}    Test Acc.:  {:.2f}%'.format(testing_loss_for_this_epoch, 100. * test_accuracy,))
-
+        print("2nd weights W2 after the epoch no ", epoch_num, " is ",mlp.linear_transform_object_second.weights)
+        time.sleep(10)
 
     plt.show()
