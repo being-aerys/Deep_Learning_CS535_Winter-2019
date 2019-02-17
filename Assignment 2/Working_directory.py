@@ -51,7 +51,8 @@ class LinearTransform(object):
         #print("shapes of x, self.weights, bias", self.weights.shape,x.shape,self.bias.shape)
         #time.sleep(111)
         batch_linear_summation_without_sigmoid = np.dot(np.transpose(self.weights),x)+self.bias
-        #print("batch_linear_summation_without_sigmoid",batch_linear_summation_without_sigmoid.shape)
+        #print("batch_linear_summation_without_sigmoid",batch_linear_summation_without_sigmoid)
+        #time.sleep(222)
         return (batch_linear_summation_without_sigmoid)
 
 
@@ -61,10 +62,10 @@ class LinearTransform(object):
         #print("here inside sha[pes ",np.transpose(grad_output).shape, np.transpose(self.weights).shape)
 
 
-        dE_by_dZ1 = np.dot(np.transpose(grad_output), np.transpose(self.weights))
+        dE_by_dZ1_to_return = np.dot(np.transpose(grad_output), np.transpose(self.weights))
 
 
-        return dE_by_dZ1
+        return dE_by_dZ1_to_return
 
 
 
@@ -89,14 +90,14 @@ class ReLU(object):
         return relu_output
 
 
-    def backward( self, input, grad_output):
+    def backward( self, A1_matrix, grad_output):
 
         #print("Relu backeard bhitra ", input, grad_output)
 
         #print("here",dZ1_by_dA1.dtype)
 
         #print("i",grad_output.shape)
-        input = input.transpose()
+        A1_matrix = A1_matrix.transpose()
 
 
         #print("np.multiply(grad_output,np.random.random_sample())",np.multiply(grad_output,np.random.random_sample()).shape)
@@ -108,11 +109,24 @@ class ReLU(object):
         #
         # #print("relu output backward",grad_output.shape)
 
-        a = np.heaviside(input, np.multiply(np.random.random_sample(), grad_output))
+        #a = np.heaviside(input, np.multiply(np.random.random_sample(), grad_output)) # no of examples * no of hidden nodes
+
+        np.where(A1_matrix < 0, 0, A1_matrix)
+        np.where(A1_matrix > 0, 1, A1_matrix)#---------------------------------------ignoring inputs = 0 for now
+
+        dE1_by_dA1_to_retuen = np.multiply(grad_output, A1_matrix)
 
 
 
-        return(a)
+
+        print(dE1_by_dA1_to_retuen.shape)
+        #time.sleep(222)
+        #b = np.multiply()
+        #time.sleep(111)
+
+
+
+        return(dE1_by_dA1_to_retuen)
 
 
     # DEFINE backward function
@@ -138,7 +152,7 @@ class SigmoidCrossEntropy(object):
     def backward(self,input, true_output, predicted_output, grad_output, learning_rate,direction, momentum, l2_penalty,second_layer_wts, second_layer_bias ):
 
         #print("true and predicted",(true_output).shape,predicted_output.shape)
-        dE_by_dA2 = np.transpose(true_output)-predicted_output
+        dE_by_dA2 =predicted_output -  np.transpose(true_output)
         #print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",dE_by_dA2.shape)
         return(dE_by_dA2 )
 
@@ -182,51 +196,57 @@ class MLP(object):
         #------------------
 
 
-    def train(self,x_batch,y_batch,learning_rate,momentum,l2_penalty):
+    def train(self,x_batch,y_unrolled,learning_rate,momentum,l2_penalty):
 
         self.x_for_this_batch = np.array(x_batch)
-        self.y_for_this_batch = np.array(y_batch)
-
-        ###########------------First FOrward Pass and then backward pass---------
-
+        self.y_for_this_batch = y_unrolled
+        #print("a",self.y_for_this_batch)
+        #time.sleep(111)
 
 
 
 
         self.A1= np.array(self.linear_transform_object_first.forward(x_batch))
-        #print("A1 shape",self.A1.shape)
+        #print("A1 shape",self.A1)
 
         self.Z1 = np.array(self.relu_layer.forward(self.A1))
-        #print("Z1 shape",self.Z1.shape)
+        #print("Z1 shape",self.Z1)
+        #time.sleep(2222)
 
         self.A2 = np.array(self.linear_transform_object_second.forward_2(self.Z1))
-        #print("A2 value in training ",self.A2)
-
+        print("A2 value in training ",self.A2)
+        print("W2 ",self.linear_transform_object_second.weights)
         self.y_cap = np.array(self.sigmoid_object_layer.forward(self.A2))
-        #print("y_cap shape",self.y_cap)
-
-        y_transposed = np.transpose(self.y_for_this_batch) #doing transpose to make dimensions compatible
+        print("y_cap is",self.y_cap)
+        #time.sleep(10)
+        #y_transposed = np.transpose(self.y_for_this_batch) #doing transpose to make dimensions compatible
 #-------------------------------------------------removing to chack if small or not
         # avoid overflow and underflow
         #
         #print("self y cap ",self.y_cap)
-        self.y_cap = np.where(self.y_cap == 0, 0.00001, self.y_cap)
 
-
-
-        self.y_cap = np.where(self.y_cap == 1, 1 - 0.00001, self.y_cap)
-
+        self.y_cap = np.clip(self.y_cap,1e-12,1-(1e-12))
+        # self.y_cap = np.where(self.y_cap == 0, 0.0000001, self.y_cap)
+        #
+        #
+        #
+        # self.y_cap = np.where(self.y_cap == 1, 1 - 0.0000001, self.y_cap)
+        #
 
 #--------------------------------------------------------------------------
         #calculate the loss for this batch
 
 
-        #print("y_cap is ",self.y_cap)
+        #print("y_cap is ",np.log(self.y_cap+1e-9))
 
-        loss = - (np.dot(y_transposed,np.transpose(np.log(self.y_cap)))+ np.dot((1-y_transposed),np.transpose(np.log(1-self.y_cap))))
+        #print("ss",(y_transposed*np.log(self.y_cap+1e-9)).shape)
+        #time.sleep(222)
+        #loss = -(np.sum(y_unrolled*np.log(self.y_cap+1e-9))+ np.sum((1 - y_unrolled * np.log((1 - self.y_cap+1e-9)))))/num_examples_per_batch
+        #loss = - (np.dot(y_transposed,np.transpose(np.log(self.y_cap)))+ np.dot((1-y_transposed),np.transpose(np.log(1-self.y_cap))))
+        #print(self.y_cap)
+        loss = - (np.multiply(y_unrolled,np.transpose(np.log(self.y_cap)))+ np.multiply((1-y_unrolled),np.transpose(np.log(1-self.y_cap))))/num_examples_per_batch
 
-
-        #print("loss ",loss)
+        print("loss ",loss)
         #time.sleep(1111)
         # first_part_of_loss = np.multiply(y_transposed, np.log(self.y_cap))
         #
@@ -249,9 +269,10 @@ class MLP(object):
 
 
 
-        #print("Shape of W2 is ",self.linear_transform_object_second.weights)
-
-        dE_by_dW2 = (np.dot(dE_by_dA2,np.transpose(self.Z1)))/ num_examples_per_batch # divide by batch size
+        # print("Shape of W2 is ",dE_by_dA2.shape,self.Z1.shape)
+        # print(mlp.linear_transform_object_second.weights.shape)
+        #time.sleep(111)
+        dE_by_dW2 = (np.dot(dE_by_dA2,np.transpose(self.Z1)))/ num_examples_per_batch # divide by batch size----------------This is correct
         #print("shapesaaaa ",dE_by_dW2.shape)
         #
 
@@ -272,8 +293,8 @@ class MLP(object):
 
         dE_by_dA1_unsummed = self.relu_layer.backward(self.A1, dE_by_dZ1_not_summed) #should return dE by dA1
 
-        #print("dimension ",dE_by_dA1_unsummed.shape)
-        #
+        # print("dimension ",dE_by_dA1_unsummed)
+        # time.sleep(111)
 
 
 
@@ -300,11 +321,12 @@ class MLP(object):
 
         #dE_by_db1 = np.sum(dE_by_dA1_unsummed,axis = 0)/num_examples_per_batch
 
-        #print(dE_by_dA1_unsummed.shape, self.x_for_this_batch.shape)
+        print(dE_by_dA1_unsummed.shape, self.x_for_this_batch.shape)
         dE_by_dW1 = np.dot(np.transpose(dE_by_dA1_unsummed), self.x_for_this_batch)/ num_examples_per_batch
 
         #print(dE_by_dW1.shape)
-        dE_by_db1 = np.transpose(dE_by_dA1_unsummed)/ num_examples_per_batch
+        #time.sleep(1111)
+        dE_by_db1 = np.transpose(dE_by_dA1_unsummed)/ num_examples_per_batch#-------------------------------This is correct
 
         #time.sleep(111)
 
@@ -582,7 +604,8 @@ class MLP(object):
 
 
         #print(" update in the weights is ",direction_for_W2)
-        #time.sleep(533)
+        # print(self.linear_transform_object_second.weights)
+        # time.sleep(533)
         self.linear_transform_object_second.weights = self.linear_transform_object_second.weights + direction_for_W2
         #self.linear_transform_object_second.weights-=learning_rate * np.transpose(dE_by_dW2)
 
@@ -593,6 +616,8 @@ class MLP(object):
 
         #print("old b2",self.linear_transform_object_second.bias.shape)
         #print("yo k ho ta ",( np.array(dE_by_db2) + np.dot(l2_penalty_factor, self.linear_transform_object_second.bias )))
+        #print(self.linear_transform_object_second.bias)
+        #time.sleep(533)
         direction_for_b2 = np.multiply(inertia_of_momentum , direction_b2) - np.multiply(learning_rate, (( np.array(dE_by_db2) + np.multiply(l2_penalty_factor, self.linear_transform_object_second.bias ))))
         #print("to add to  direction b2",new_direction_for_b2.shape)
 
@@ -677,6 +702,8 @@ if __name__ == '__main__':
     train_y = train_y[0:10000,...]
     test_x = test_x[0:10000,...]
     test_y = test_y[0:10000,...]
+    print(train_y)
+    #time.sleep(222)
 
 
 
@@ -705,7 +732,7 @@ if __name__ == '__main__':
     l2_penalty_factor = [0.0,0.0000001,0.0000003,0.000001,0.000003,0.00001,0.00003,0.0001,0.0003,0.001,0.003,0.01,0.03,1,3,10,20]
     #print("Choose the corresponding index number for the learning rate you want to use")
     #lr = int(input("[0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]"))
-    lr =  0
+    lr =  5
     #print("Choose the corresponding index number for the inertia of momentum you want to use")
     #iner = int(input("[0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]"))
     iner = 3
@@ -746,6 +773,22 @@ if __name__ == '__main__':
 
             mlp.x_for_this_batch = train_x[batch_start:batch_end,...]
             mlp.y_for_this_batch = train_y[batch_start:batch_end,...]
+            #print(mlp.y_for_this_batch )
+
+
+            y_unrolled = []
+            for i in mlp.y_for_this_batch:
+                y_unrolled.append(i[0])
+
+
+        ###########------------First FOrward Pass and then backward pass---------
+            y_unrolled = np.reshape(y_unrolled,(1,10))
+            print(y_unrolled.shape)
+            mlp.y_for_this_batch = np.transpose(y_unrolled)
+            #time.sleep(11)
+
+
+
 
 
 
@@ -773,12 +816,12 @@ if __name__ == '__main__':
         print(" total_loss_for_epoch",epoch_num," is ",total_loss_for_epoch)
 
         #reset weights after each epoch
-        mlp.linear_transform_object_first = LinearTransform(0.001 * np.random.randn(input_dims, num_of_hidden_nodes),0.001 * np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.zeros((num_of_hidden_nodes,1))))#-----------------------MANUALLY done
-
-
-
-
-        mlp.linear_transform_object_second = LinearTransform(0.001 * np.random.randn(num_of_hidden_nodes, 1), 0.001 * np.full((1,int(num_examples_per_batch)),np.zeros(1)))
+        # mlp.linear_transform_object_first = LinearTransform(0.001 * np.random.randn(input_dims, num_of_hidden_nodes),0.001 * np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.zeros((num_of_hidden_nodes,1))))#-----------------------MANUALLY done
+        #
+        #
+        #
+        #
+        # mlp.linear_transform_object_second = LinearTransform(0.001 * np.random.randn(num_of_hidden_nodes, 1), 0.001 * np.full((1,int(num_examples_per_batch)),np.zeros(1)))
 
         # direction_for_W2 = np.zeros(mlp.linear_transform_object_second.weights.shape)
         # direction_for_W1 = np.zeros(mlp.linear_transform_object_first.weights.shape)
@@ -818,6 +861,6 @@ if __name__ == '__main__':
         #print('Train Loss: {:.3f}    Train Acc.: {:.2f}%'.format(training_loss_for_this_epoch,100. * train_accuracy,))
         # print('    Test Loss:  {:.3f}    Test Acc.:  {:.2f}%'.format(testing_loss_for_this_epoch, 100. * test_accuracy,))
         print("2nd weights W2 after the epoch no ", epoch_num, " is ",mlp.linear_transform_object_second.weights)
-        time.sleep(10)
+        #time.sleep(10)
 
     plt.show()
