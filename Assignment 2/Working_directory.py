@@ -117,23 +117,7 @@ class ReLU(object):
         dE1_by_dA1_to_retuen = np.multiply(grad_output, A1_matrix)
 
 
-
-
-        #print(dE1_by_dA1_to_retuen.shape)
-        #time.sleep(222)
-        #b = np.multiply()
-        #time.sleep(111)
-
-
-
         return(dE1_by_dA1_to_retuen)
-
-
-    # DEFINE backward function
-# ADD other operations in ReLU if needed
-
-
-
 
 
 class SigmoidCrossEntropy(object):
@@ -170,12 +154,12 @@ class MLP(object):
 
 
 
-        self.linear_transform_object_first = LinearTransform(0.01 * np.random.randn(input_dims, hidden_units),0.01 * np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.random.random((num_of_hidden_nodes,1))))#-----------------------MANUALLY done
+        self.linear_transform_object_first = LinearTransform(0.1 * np.random.randn(input_dims, hidden_units),0.1 * np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.random.random((num_of_hidden_nodes,1))))#-----------------------MANUALLY done
 
         self.relu_layer = ReLU()
 
 
-        self.linear_transform_object_second = LinearTransform(0.01 * np.random.randn(hidden_units, 1), 0.01 * np.full((1,int(num_examples_per_batch)),np.random.random(1)))
+        self.linear_transform_object_second = LinearTransform(0.1 * np.random.randn(hidden_units, 1), 0.1 * np.full((1,int(num_examples_per_batch)),np.random.random(1)))
 
 
 
@@ -187,13 +171,6 @@ class MLP(object):
         self.y_for_this_batch = []
         #self.y_cap_for_this_batch = []
 
-
-        #self.Z1 = [] #Relu through aayeko xa sigmoid of A1
-        #self.sigmoid_output = []#Sigmoid through aayeko is Relu of A2, equals y cap for this batch
-
-        #self.A1 = [] #A1
-        #self.sigmoid_layer_op_before_sigmoid = []#A2
-        #------------------
 
 
     def train(self,x_batch,y_unrolled,learning_rate,momentum,l2_penalty):
@@ -502,7 +479,7 @@ class MLP(object):
             x_for_this_batch_test = np.array(x_data)
             y_for_this_batch_test = np.array(y_data)
 
-            loss_val = 0
+
             total_acc_for_whole_data_test = 0
             total_examples_inside_evaluate_test = 0
 
@@ -548,15 +525,15 @@ class MLP(object):
                 A2 = np.array(self.linear_transform_object_second.forward_2(Z1))
                 #print("A2 shape",self.A2)
                 #time.sleep(9888)
-                y_cap_evaluate = np.array(self.sigmoid_object_layer.forward(A2))
+                y_cap_evaluate_test = np.array(self.sigmoid_object_layer.forward(A2))
                 #print("y cap evaluate before adjusting for test ", y_cap_evaluate)
                 #time.sleep(111)
-                y_cap_evaluate = np.where(y_cap_evaluate >0.5, 1, 0)
+                y_cap_evaluate_test = np.where(y_cap_evaluate_test >0.5, 1, 0)
                 #print("y cap in evaluate test data  after adjusting is  ",y_cap_evaluate)
                 #time.sleep(111)
 
 
-                y_transposed = np.transpose(y_batch) #doing transpose to make dimensions compatible
+                y_transposed_test = np.transpose(y_batch) #doing transpose to make dimensions compatible
                 #print("y ",y_batch)
                 #print("y_cap ",y_cap)
                 #time.sleep(5)
@@ -569,7 +546,7 @@ class MLP(object):
                 #----------------calculat eaccuracy
                 # print(y_transposed)
                 #print("\n\nIn evaluate for testing data",y_cap_evaluate)
-                accuracy = np.sum (y_transposed == y_cap_evaluate)
+                accuracy_test = np.sum (y_transposed_test == y_cap_evaluate_test)
                 #print("accuracy in test data is ",accuracy)
                 #time.sleep(3)
 
@@ -580,7 +557,7 @@ class MLP(object):
                 #print("Loss value is ",loss_val)
                 #time.sleep(3)
                 #print("old test accuracy for all test data is  ",total_acc_for_whole_data_test)
-                total_acc_for_whole_data_test += accuracy
+                total_acc_for_whole_data_test += accuracy_test
                 #print("New test accuracy for all test data ", total_acc_for_whole_data_test)
                 #time.sleep(3)
 
@@ -589,7 +566,7 @@ class MLP(object):
             #print("acc val for whole data is ", total_acc_for_whole_data)
 
 
-
+            print(y_cap_evaluate_test)
             return total_acc_for_whole_data_test #yesto nagare 2-dimensional array return garxa feri
 
 
@@ -717,28 +694,37 @@ if __name__ == '__main__':
 
     num_examples, input_dims = train_x.shape
     num_of_hidden_nodes = 100
-    num_epochs = 100
+    num_epochs = 500
     epoch_list_for_plot = []
     Training_accuracy_list = []
     Testing_accuracy_list = []
-    num_batches = 1000
+    num_batches = 100
     #num_batches_for_test_time = num_batches / (len(train_y)/len(test_y)) #
 
     num_examples_per_batch = num_examples / num_batches
 
 
-    learning_rate = [0.2,0.00000001,0.001,0.002,0.003,0.01,0.03,0.1,0.3,1,3,10,20]
-    inertia_of_momentum = [10,0.001,0.003,0.005,0.008,0.01,0.03,0.1,0.3,0.5,0.6,0.7,0.8,0.9,1,3,10]
-    l2_penalty_factor = [0.0,0.0000001,0.0000003,0.000001,0.000003,0.00001,0.00003,0.0001,0.0003,0.001,0.003,0.01,0.03,1,3,10,20]
+    learning_rate = [1,0.00000001,0.001,0.002,0.003,0.01,0.03,0.1,0.3,1,3,10,20]
+    inertia_of_momentum = [0,0.8,0.003,0.5,0.008,0.01,0.03,0.1,0.3,0.5,0.6,0.7,0.8,0.9,1,3,10]
+    l2_penalty_factor = [0,0.001,0.0000001,0.0000003,0.000001,0.000003,0.00001,0.00003,0.0001,0.0003,0.001,0.003,0.01,0.03,1,3,10,20]
     #print("Choose the corresponding index number for the learning rate you want to use")
     #lr = int(input("[0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]"))
     lr =  0
     #print("Choose the corresponding index number for the inertia of momentum you want to use")
     #iner = int(input("[0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]"))
-    iner = 3
+    iner = 0
     #print("Choose the corresponding index number for the L2 penalty factor you want to use")
     #penalty = int(input("[0.0000001,0.0000003,0.000001,0.000003,0.00001,0.00003,0.0001,0.0003,0.001,0.003,0.01,0.03,1,3,10]"))
     penalty = 0
+
+    print(" num of hidden nodes: ",num_of_hidden_nodes)
+    print("num of total epochs is ",num_epochs)
+    print("num of examples per batch ",num_examples_per_batch)
+    print("num of batches ",num_batches)
+    print("num of epochs",num_epochs)
+    print("learning rate is ",learning_rate[lr])
+    print("momentum coefficient is ",inertia_of_momentum[iner])
+    print("l2 penalty factor is ",l2_penalty_factor[penalty])
 
 
     mlp = MLP(input_dims, num_of_hidden_nodes)
@@ -747,7 +733,10 @@ if __name__ == '__main__':
 
     epoch_num = 1
     for epoch in range(num_epochs):
+
         print(" Epoch is ",epoch_num)
+        print("y cap",mlp.linear_transform_object_second.weights)
+        time.sleep(1)
         #time.sleep(1)
 
 	# INSERT YOUR CODE FOR EACH EPOCH HERE
@@ -782,7 +771,7 @@ if __name__ == '__main__':
 
 
         ###########------------First FOrward Pass and then backward pass---------
-            y_unrolled = np.reshape(y_unrolled,(1,10))
+            y_unrolled = np.reshape(y_unrolled,(1,int(num_examples_per_batch)))
             #print(y_unrolled.shape)
             mlp.y_for_this_batch = np.transpose(y_unrolled)
             #time.sleep(11)
@@ -807,6 +796,7 @@ if __name__ == '__main__':
 
 
             total_loss_for_epoch = total_loss_for_epoch + loss
+
 
             #print('\r[Epoch {}, mb {}]    Avg.Loss = {:.3f}'.format(epoch + 1,b + 1,total_loss_for_epoch,),end='', )
 
