@@ -113,13 +113,13 @@ class ReLU(object):
 
         np.where(A1_matrix < 0, 0, A1_matrix)
         np.where(A1_matrix > 0, 1, A1_matrix)#---------------------------------------ignoring inputs = 0 for now
-
+        #np.where(A1_matrix == 0, np.multiply(np.random.random, A1_matrix),A1_matrix)
         dE1_by_dA1_to_retuen = np.multiply(grad_output, A1_matrix)
 
 
 
 
-        print(dE1_by_dA1_to_retuen.shape)
+        #print(dE1_by_dA1_to_retuen.shape)
         #time.sleep(222)
         #b = np.multiply()
         #time.sleep(111)
@@ -214,10 +214,10 @@ class MLP(object):
         #time.sleep(2222)
 
         self.A2 = np.array(self.linear_transform_object_second.forward_2(self.Z1))
-        print("A2 value in training ",self.A2)
-        print("W2 ",self.linear_transform_object_second.weights)
+        # print("A2 value in training ",self.A2)
+        # print("W2 ",self.linear_transform_object_second.weights)
         self.y_cap = np.array(self.sigmoid_object_layer.forward(self.A2))
-        print("y_cap is",self.y_cap)
+        #print("y_cap is",self.y_cap)
         #time.sleep(10)
         #y_transposed = np.transpose(self.y_for_this_batch) #doing transpose to make dimensions compatible
 #-------------------------------------------------removing to chack if small or not
@@ -246,7 +246,7 @@ class MLP(object):
         #print(self.y_cap)
         loss = - (np.multiply(y_unrolled,np.transpose(np.log(self.y_cap)))+ np.multiply((1-y_unrolled),np.transpose(np.log(1-self.y_cap))))/num_examples_per_batch
 
-        print("loss ",loss)
+        #print("loss ",loss)
         #time.sleep(1111)
         # first_part_of_loss = np.multiply(y_transposed, np.log(self.y_cap))
         #
@@ -321,7 +321,7 @@ class MLP(object):
 
         #dE_by_db1 = np.sum(dE_by_dA1_unsummed,axis = 0)/num_examples_per_batch
 
-        print(dE_by_dA1_unsummed.shape, self.x_for_this_batch.shape)
+        #print(dE_by_dA1_unsummed.shape, self.x_for_this_batch.shape)
         dE_by_dW1 = np.dot(np.transpose(dE_by_dA1_unsummed), self.x_for_this_batch)/ num_examples_per_batch
 
         #print(dE_by_dW1.shape)
@@ -628,7 +628,7 @@ class MLP(object):
         direction_for_W1 = np.multiply(inertia_of_momentum , direction_W1) - np.dot(learning_rate, (( np.transpose(dE_by_dW1) + np.dot(l2_penalty_factor, self.linear_transform_object_first.weights ))))
 
         self.linear_transform_object_first.weights =  self.linear_transform_object_first.weights + direction_for_W1
-        print(self.linear_transform_object_first.weights.shape)
+        #print(self.linear_transform_object_first.weights.shape)
         #time.sleep(22)
 
 
@@ -702,7 +702,7 @@ if __name__ == '__main__':
     train_y = train_y[0:10000,...]
     test_x = test_x[0:10000,...]
     test_y = test_y[0:10000,...]
-    print(train_y)
+    #print(train_y)
     #time.sleep(222)
 
 
@@ -716,8 +716,8 @@ if __name__ == '__main__':
     #time.sleep(111)
 
     num_examples, input_dims = train_x.shape
-    num_of_hidden_nodes = 20
-    num_epochs = 15
+    num_of_hidden_nodes = 100
+    num_epochs = 100
     epoch_list_for_plot = []
     Training_accuracy_list = []
     Testing_accuracy_list = []
@@ -727,12 +727,12 @@ if __name__ == '__main__':
     num_examples_per_batch = num_examples / num_batches
 
 
-    learning_rate = [0.6,0.00000001,0.001,0.002,0.003,0.01,0.03,0.1,0.3,1,3,10,20]
+    learning_rate = [0.2,0.00000001,0.001,0.002,0.003,0.01,0.03,0.1,0.3,1,3,10,20]
     inertia_of_momentum = [10,0.001,0.003,0.005,0.008,0.01,0.03,0.1,0.3,0.5,0.6,0.7,0.8,0.9,1,3,10]
     l2_penalty_factor = [0.0,0.0000001,0.0000003,0.000001,0.000003,0.00001,0.00003,0.0001,0.0003,0.001,0.003,0.01,0.03,1,3,10,20]
     #print("Choose the corresponding index number for the learning rate you want to use")
     #lr = int(input("[0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]"))
-    lr =  5
+    lr =  0
     #print("Choose the corresponding index number for the inertia of momentum you want to use")
     #iner = int(input("[0.001,0.003,0.01,0.03,0.1,0.3,1,3,10]"))
     iner = 3
@@ -747,7 +747,7 @@ if __name__ == '__main__':
 
     epoch_num = 1
     for epoch in range(num_epochs):
-        #print(" Epoch is ",epoch_num)
+        print(" Epoch is ",epoch_num)
         #time.sleep(1)
 
 	# INSERT YOUR CODE FOR EACH EPOCH HERE
@@ -764,7 +764,7 @@ if __name__ == '__main__':
         for b in range(num_batches):
 
 
-            print("Epoch No", epoch_num,"BATCH NUMBER: ", b)
+            #print("Epoch No", epoch_num,"BATCH NUMBER: ", b)
 
             batch_start = int( (num_examples / num_batches) * b)
             batch_end = int((num_examples / num_batches)*(b +1))
@@ -783,7 +783,7 @@ if __name__ == '__main__':
 
         ###########------------First FOrward Pass and then backward pass---------
             y_unrolled = np.reshape(y_unrolled,(1,10))
-            print(y_unrolled.shape)
+            #print(y_unrolled.shape)
             mlp.y_for_this_batch = np.transpose(y_unrolled)
             #time.sleep(11)
 
@@ -813,7 +813,7 @@ if __name__ == '__main__':
             #after each mini bach update you want to update the momentum value
             sys.stdout.flush()
 
-        print(" total_loss_for_epoch",epoch_num," is ",total_loss_for_epoch)
+        #print(" total_loss_for_epoch",epoch_num," is ",total_loss_for_epoch)
 
         #reset weights after each epoch
         # mlp.linear_transform_object_first = LinearTransform(0.001 * np.random.randn(input_dims, num_of_hidden_nodes),0.001 * np.full((num_of_hidden_nodes,int(num_examples_per_batch)),np.zeros((num_of_hidden_nodes,1))))#-----------------------MANUALLY done
@@ -860,7 +860,7 @@ if __name__ == '__main__':
         epoch_num +=1
         #print('Train Loss: {:.3f}    Train Acc.: {:.2f}%'.format(training_loss_for_this_epoch,100. * train_accuracy,))
         # print('    Test Loss:  {:.3f}    Test Acc.:  {:.2f}%'.format(testing_loss_for_this_epoch, 100. * test_accuracy,))
-        print("2nd weights W2 after the epoch no ", epoch_num, " is ",mlp.linear_transform_object_second.weights)
+        #print("2nd weights W2 after the epoch no ", epoch_num, " is ",mlp.linear_transform_object_second.weights)
         #time.sleep(10)
 
     plt.show()
